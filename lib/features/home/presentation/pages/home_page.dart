@@ -40,6 +40,63 @@ class _HomePageState extends State<HomePage> {
   Future<void> _markPeriodStarted() async {
     if (_settings == null) return;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark
+        ? HomeColors.surfaceDark
+        : HomeColors.surfaceLight;
+    final textColor = isDark ? HomeColors.textDark : HomeColors.textLight;
+    final textMuted = isDark
+        ? HomeColors.textMutedDark
+        : HomeColors.textMutedLight;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          "Mark Period Started?",
+          style: GoogleFonts.nunitoSans(
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        content: Text(
+          "This will start a new cycle from today. Are you sure?",
+          style: GoogleFonts.nunitoSans(fontSize: 16, color: textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              "No",
+              style: GoogleFonts.nunitoSans(
+                fontWeight: FontWeight.bold,
+                color: textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HomeColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              "Yes",
+              style: GoogleFonts.nunitoSans(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     final now = DateTime.now();
     final newSettings = UserSettingsModel(
       id: _settings!.id,
@@ -174,9 +231,9 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 32),
+                  // const SizedBox(width: 32),
                   Text(
-                    "Home",
+                    "Welcome!",
                     style: GoogleFonts.nunitoSans(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

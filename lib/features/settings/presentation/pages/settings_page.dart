@@ -80,7 +80,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settings saved successfully')),
+        SnackBar(
+          content: Text(
+            'Settings saved successfully',
+            style: GoogleFonts.nunitoSans(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: HomeColors.textLight,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(24),
+        ),
       );
       Navigator.pop(context, true); // Return true to indicate changes
     }
