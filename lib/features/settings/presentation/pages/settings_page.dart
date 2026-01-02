@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:p_tracker/core/database/database_helper.dart';
+import 'package:p_tracker/core/theme/theme_provider.dart';
 import 'package:p_tracker/features/home/presentation/utils/home_constants.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   UserSettingsModel? _settings;
   bool _isLoading = true;
 
@@ -99,11 +101,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Check system brightness for now, as we don't have a provider yet
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Update local state to match system on first build if needed,
-    // but for the toggle UI we might want to track it separately or just show system state.
-    // For this implementation, I'll just use the system state for rendering.
+    final themeMode = ref.watch(themeProvider);
+    final isDark =
+        themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     final bgColor = isDark
         ? HomeColors.backgroundDark
@@ -313,14 +315,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: Switch.adaptive(
                         value: isDark,
                         onChanged: (value) {
-                          // In a real app, this would update a ThemeProvider
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Theme switching requires app restart or ThemeProvider',
-                              ),
-                            ),
-                          );
+                          ref.read(themeProvider.notifier).toggleTheme(value);
                         },
                         activeColor: HomeColors.primary,
                       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:p_tracker/core/theme/theme_provider.dart';
 import 'package:p_tracker/features/onboarding/presentation/utils/onboarding_constants.dart';
 import 'package:p_tracker/features/onboarding/presentation/widgets/onboarding_step_one.dart';
 import 'package:p_tracker/features/onboarding/presentation/widgets/onboarding_step_two.dart';
@@ -8,26 +10,23 @@ import 'package:p_tracker/features/home/presentation/pages/home_page.dart';
 import 'package:p_tracker/core/database/database_helper.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
 
-class OnboardingPage extends StatefulWidget {
+class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
 
   @override
-  State<OnboardingPage> createState() => _OnboardingPageState();
+  ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  bool _isDark = false; // Local state for demo, ideally use ThemeProvider
 
   int _cycleLength = 28;
   int _periodDuration = 5;
   DateTime? _selectedDate;
 
-  void _toggleTheme() {
-    setState(() {
-      _isDark = !_isDark;
-    });
+  void _toggleTheme(bool isDark) {
+    ref.read(themeProvider.notifier).toggleTheme(!isDark);
   }
 
   void _nextPage() {
@@ -46,10 +45,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = _isDark
-        ? OnboardingColors.bgDark
-        : OnboardingColors.bgLight;
-    final textMain = _isDark
+    final themeMode = ref.watch(themeProvider);
+    final isDark =
+        themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
+
+    final bgColor = isDark ? OnboardingColors.bgDark : OnboardingColors.bgLight;
+    final textMain = isDark
         ? OnboardingColors.textMainDark
         : OnboardingColors.textMainLight;
 
@@ -94,9 +97,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
                   // Theme Toggle
                   IconButton(
-                    onPressed: _toggleTheme,
+                    onPressed: () => _toggleTheme(isDark),
                     icon: Icon(
-                      _isDark
+                      isDark
                           ? Icons.light_mode_rounded
                           : Icons.dark_mode_rounded,
                       color: textMain,
@@ -111,9 +114,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  _buildProgressDot(0),
-                  _buildProgressDot(1),
-                  _buildProgressDot(2),
+                  _buildProgressDot(0, isDark),
+                  _buildProgressDot(1, isDark),
+                  _buildProgressDot(2, isDark),
                 ],
               ),
             ),
@@ -130,7 +133,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 },
                 children: [
                   OnboardingStepOne(
-                    isDark: _isDark,
+                    isDark: isDark,
                     onNext: _nextPage,
                     selectedDate: _selectedDate,
                     onDateSelected: (date) {
@@ -140,7 +143,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     },
                   ),
                   OnboardingStepTwo(
-                    isDark: _isDark,
+                    isDark: isDark,
                     cycleLength: _cycleLength,
                     periodDuration: _periodDuration,
                     onCycleLengthChanged: (val) =>
@@ -151,7 +154,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     onBack: _previousPage,
                   ),
                   OnboardingStepThree(
-                    isDark: _isDark,
+                    isDark: isDark,
                     cycleLength: _cycleLength,
                     periodDuration: _periodDuration,
                     selectedDate: _selectedDate,
@@ -183,7 +186,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildProgressDot(int index) {
+  Widget _buildProgressDot(int index, bool isDark) {
     final isActive = _currentPage >= index;
     return Expanded(
       child: Container(
@@ -192,7 +195,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         decoration: BoxDecoration(
           color: isActive
               ? OnboardingColors.primaryColor
-              : (_isDark ? Colors.grey[800] : Colors.grey[300]),
+              : (isDark ? Colors.grey[800] : Colors.grey[300]),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
