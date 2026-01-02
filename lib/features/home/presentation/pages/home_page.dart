@@ -227,7 +227,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -268,277 +268,283 @@ class _HomePageState extends State<HomePage> {
             ),
 
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    "Today",
-                    style: GoogleFonts.nunitoSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      "Today",
+                      style: GoogleFonts.nunitoSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatusCard(
-                          icon: Icons.water_drop,
-                          iconColor: HomeColors.primary,
-                          iconBg: isDark
-                              ? HomeColors.primary.withOpacity(0.2)
-                              : HomeColors.primarySoft,
-                          title: "Next Period",
-                          value: DateFormat('d MMM').format(nextPeriod),
-                          subtitle: "$daysUntilPeriod days left",
-                          subtitleColor: HomeColors.primary,
-                          surfaceColor: surfaceColor,
-                          textColor: textColor,
-                          textMuted: textMuted,
-                          isDark: isDark,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatusCard(
+                            icon: Icons.water_drop,
+                            iconColor: HomeColors.primary,
+                            iconBg: isDark
+                                ? HomeColors.primary.withOpacity(0.2)
+                                : HomeColors.primarySoft,
+                            title: "Next Period",
+                            value: DateFormat('d MMM').format(nextPeriod),
+                            subtitle: "$daysUntilPeriod days left",
+                            subtitleColor: HomeColors.primary,
+                            surfaceColor: surfaceColor,
+                            textColor: textColor,
+                            textMuted: textMuted,
+                            isDark: isDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatusCard(
-                          icon: Icons.spa,
-                          iconColor: HomeColors.secondary,
-                          iconBg: isDark
-                              ? HomeColors.secondary.withOpacity(0.2)
-                              : HomeColors.secondarySoft,
-                          title: "Fertile Window",
-                          value:
-                              "${DateFormat('d MMM').format(fertileStart)} - ${DateFormat('d MMM').format(fertileEnd)}",
-                          subtitle:
-                              "Ovulation: ${DateFormat('d MMM').format(ovulationDate)}",
-                          subtitleColor: textMuted,
-                          surfaceColor: surfaceColor,
-                          textColor: textColor,
-                          textMuted: textMuted,
-                          isDark: isDark,
-                          isFertileCard: true,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Calendar
-                  Container(
-                    decoration: BoxDecoration(
-                      color: surfaceColor,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatusCard(
+                            icon: Icons.spa,
+                            iconColor: HomeColors.secondary,
+                            iconBg: isDark
+                                ? HomeColors.secondary.withOpacity(0.2)
+                                : HomeColors.secondarySoft,
+                            title: "Fertile Window",
+                            value:
+                                "${DateFormat('d MMM').format(fertileStart)} - ${DateFormat('d MMM').format(fertileEnd)}",
+                            subtitle:
+                                "Ovulation: ${DateFormat('d MMM').format(ovulationDate)}",
+                            subtitleColor: textMuted,
+                            surfaceColor: surfaceColor,
+                            textColor: textColor,
+                            textMuted: textMuted,
+                            isDark: isDark,
+                            isFertileCard: true,
+                          ),
                         ),
                       ],
-                      border: Border.all(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-                      ),
                     ),
-                    child: Column(
-                      children: [
-                        // Calendar Header
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _focusedMonth = DateTime(
-                                      _focusedMonth.year,
-                                      _focusedMonth.month - 1,
-                                    );
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.chevron_left,
-                                  color: textMuted,
-                                ),
-                              ),
-                              Text(
-                                DateFormat('MMMM y').format(_focusedMonth),
-                                style: GoogleFonts.nunitoSans(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _focusedMonth = DateTime(
-                                      _focusedMonth.year,
-                                      _focusedMonth.month + 1,
-                                    );
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.chevron_right,
-                                  color: textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
 
-                        // Days Header
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: ["S", "M", "T", "W", "T", "F", "S"]
-                                .map(
-                                  (day) => SizedBox(
-                                    width: 32,
-                                    child: Text(
-                                      day,
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.nunitoSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: textMuted,
-                                      ),
-                                    ),
+                    const SizedBox(height: 16),
+
+                    // Calendar
+                    Container(
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Calendar Header
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _focusedMonth = DateTime(
+                                        _focusedMonth.year,
+                                        _focusedMonth.month - 1,
+                                      );
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.chevron_left,
+                                    color: textMuted,
                                   ),
-                                )
-                                .toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Calendar Grid
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildCalendarGrid(
-                            isDark,
-                            textColor,
-                            lastPeriod,
-                            cycleLength,
-                            periodDuration,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Legend
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? surfaceColor.withOpacity(0.5)
-                                : Colors.grey[50],
-                            border: Border(
-                              top: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[100]!,
-                              ),
+                                ),
+                                Text(
+                                  DateFormat('MMMM y').format(_focusedMonth),
+                                  style: GoogleFonts.nunitoSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _focusedMonth = DateTime(
+                                        _focusedMonth.year,
+                                        _focusedMonth.month + 1,
+                                      );
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.chevron_right,
+                                    color: textMuted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildLegendItem("Period", HomeColors.primary),
-                              const SizedBox(width: 24),
-                              _buildLegendItem("Fertile", HomeColors.secondary),
-                              const SizedBox(width: 24),
-                              _buildLegendItem(
-                                "Ovulation",
-                                HomeColors.accent,
-                                icon: Icons.star,
+
+                          // Days Header
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: ["S", "M", "T", "W", "T", "F", "S"]
+                                  .map(
+                                    (day) => SizedBox(
+                                      width: 32,
+                                      child: Text(
+                                        day,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.nunitoSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: textMuted,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // Calendar Grid
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: _buildCalendarGrid(
+                              isDark,
+                              textColor,
+                              lastPeriod,
+                              cycleLength,
+                              periodDuration,
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Legend
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? surfaceColor.withOpacity(0.5)
+                                  : Colors.grey[50],
+                              border: Border(
+                                top: BorderSide(
+                                  color: isDark
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[100]!,
+                                ),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildLegendItem("Period", HomeColors.primary),
+                                const SizedBox(width: 16),
+                                _buildLegendItem(
+                                  "Fertile",
+                                  HomeColors.secondary,
+                                ),
+                                const SizedBox(width: 16),
+                                _buildLegendItem(
+                                  "Ovulation",
+                                  HomeColors.accent,
+                                  icon: Icons.star,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Cycle Stats
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: surfaceColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem(
-                          "Cycle length:",
-                          "$cycleLength days",
-                          textMuted,
-                          textColor,
-                        ),
-                        Container(
-                          width: 1,
-                          height: 16,
-                          color: isDark ? Colors.grey[700] : Colors.grey[200],
-                        ),
-                        _buildStatItem(
-                          "Period:",
-                          "$periodDuration days",
-                          textMuted,
-                          textColor,
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
-                  // Action Button
-                  ElevatedButton(
-                    onPressed: _markPeriodStarted,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HomeColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
+                    // Cycle Stats
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
                         borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                      shadowColor: HomeColors.primary.withOpacity(0.3),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Mark Period Started",
-                          style: GoogleFonts.nunitoSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
                           ),
+                        ],
+                        border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded, size: 20),
-                      ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(
+                            "Cycle length:",
+                            "$cycleLength days",
+                            textMuted,
+                            textColor,
+                          ),
+                          Container(
+                            width: 1,
+                            height: 16,
+                            color: isDark ? Colors.grey[700] : Colors.grey[200],
+                          ),
+                          _buildStatItem(
+                            "Period:",
+                            "$periodDuration days",
+                            textMuted,
+                            textColor,
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+            // Action Button - Fixed at bottom
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: ElevatedButton(
+                onPressed: _markPeriodStarted,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: HomeColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 32),
-                ],
+                  elevation: 4,
+                  shadowColor: HomeColors.primary.withOpacity(0.3),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Mark Period Started",
+                      style: GoogleFonts.nunitoSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
+                ),
               ),
             ),
           ],
@@ -562,7 +568,7 @@ class _HomePageState extends State<HomePage> {
     bool isFertileCard = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(24),
@@ -581,33 +587,33 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             title,
             style: GoogleFonts.nunitoSans(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: textMuted,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             value,
             style: GoogleFonts.nunitoSans(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
           ),
           if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: subtitleColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
