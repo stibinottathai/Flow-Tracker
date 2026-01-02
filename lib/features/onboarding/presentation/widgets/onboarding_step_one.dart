@@ -156,6 +156,7 @@ class OnboardingStepOne extends StatelessWidget {
                                   );
                                   if (date != null) {
                                     onDateSelected(date);
+                                    onNext();
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -284,37 +285,37 @@ class OnboardingStepOne extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Next Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: onNext,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: OnboardingColors.primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 4,
-                            shadowColor: OnboardingColors.primaryColor
-                                .withOpacity(0.3),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Next",
-                                style: GoogleFonts.nunitoSans(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded, size: 20),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   child: ElevatedButton(
+                      //     onPressed: onNext,
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: OnboardingColors.primaryColor,
+                      //       foregroundColor: Colors.white,
+                      //       padding: const EdgeInsets.symmetric(vertical: 16),
+                      //       shape: RoundedRectangleBorder(
+                      //         borderRadius: BorderRadius.circular(16),
+                      //       ),
+                      //       elevation: 4,
+                      //       shadowColor: OnboardingColors.primaryColor
+                      //           .withOpacity(0.3),
+                      //     ),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       children: [
+                      //         Text(
+                      //           "Next",
+                      //           style: GoogleFonts.nunitoSans(
+                      //             fontWeight: FontWeight.w600,
+                      //             fontSize: 16,
+                      //           ),
+                      //         ),
+                      //         const SizedBox(width: 8),
+                      //         const Icon(Icons.arrow_forward_rounded, size: 20),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
