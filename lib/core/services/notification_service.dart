@@ -19,7 +19,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation(timeZoneName));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(

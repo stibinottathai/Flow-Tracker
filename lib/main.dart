@@ -9,11 +9,15 @@ import 'package:p_tracker/core/services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configure dependencies
-  await configureDependencies();
+  try {
+    // Configure dependencies
+    await configureDependencies();
 
-  // Initialize Notification Service
-  await getIt<NotificationService>().init();
+    // Initialize Notification Service
+    await getIt<NotificationService>().init();
+  } catch (e) {
+    debugPrint('Initialization failed: $e');
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
