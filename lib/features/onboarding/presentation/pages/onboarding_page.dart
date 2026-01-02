@@ -154,6 +154,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     isDark: _isDark,
                     cycleLength: _cycleLength,
                     periodDuration: _periodDuration,
+                    selectedDate: _selectedDate,
                     onBack: _previousPage,
                     onComplete: () async {
                       if (_selectedDate != null) {

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:p_tracker/features/onboarding/presentation/utils/onboarding_constants.dart';
 
 class OnboardingStepThree extends StatelessWidget {
   final bool isDark;
   final int cycleLength;
   final int periodDuration;
+  final DateTime? selectedDate;
   final VoidCallback onBack;
   final VoidCallback onComplete;
 
@@ -15,6 +17,7 @@ class OnboardingStepThree extends StatelessWidget {
     required this.isDark,
     required this.cycleLength,
     required this.periodDuration,
+    required this.selectedDate,
     required this.onBack,
     required this.onComplete,
   });
@@ -162,7 +165,9 @@ class OnboardingStepThree extends StatelessWidget {
                             _buildSummaryItem(
                               icon: Icons.calendar_today_rounded,
                               label: "Last period started",
-                              value: "12 Jan 2026",
+                              value: selectedDate != null
+                                  ? DateFormat('d MMM y').format(selectedDate!)
+                                  : "Not selected",
                               color: OnboardingColors.primaryColor,
                               bgColor: isDark
                                   ? OnboardingColors.primaryColor.withOpacity(
