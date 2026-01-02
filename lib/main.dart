@@ -4,12 +4,16 @@ import 'package:p_tracker/core/di/injection.dart';
 import 'package:p_tracker/core/theme/app_theme.dart';
 import 'package:p_tracker/core/theme/theme_provider.dart';
 import 'package:p_tracker/features/splash/presentation/pages/splash_page.dart';
+import 'package:p_tracker/core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Configure dependencies
   await configureDependencies();
+
+  // Initialize Notification Service
+  await getIt<NotificationService>().init();
 
   runApp(const ProviderScope(child: MyApp()));
 }

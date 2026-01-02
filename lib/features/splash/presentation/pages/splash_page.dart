@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:p_tracker/features/home/presentation/pages/home_page.dart';
 import 'package:p_tracker/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -14,14 +16,27 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // Navigate to next screen after delay
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OnboardingPage()),
-        );
-      }
-    });
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    // Wait for splash animation
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final bool onboardingCompleted =
+        prefs.getBool('onboarding_completed') ?? false;
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) =>
+              onboardingCompleted ? const HomePage() : const OnboardingPage(),
+        ),
+      );
+    }
   }
 
   @override

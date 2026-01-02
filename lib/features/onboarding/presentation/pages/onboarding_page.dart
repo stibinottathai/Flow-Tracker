@@ -9,6 +9,7 @@ import 'package:p_tracker/features/onboarding/presentation/widgets/onboarding_st
 import 'package:p_tracker/features/home/presentation/pages/home_page.dart';
 import 'package:p_tracker/core/database/database_helper.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -23,7 +24,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   int _cycleLength = 28;
   int _periodDuration = 5;
-  DateTime? _selectedDate;
+  DateTime? _selectedDate = DateTime.now();
 
   void _toggleTheme(bool isDark) {
     ref.read(themeProvider.notifier).toggleTheme(!isDark);
@@ -168,6 +169,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         );
                         await DatabaseHelper.instance.create(settings);
                       }
+
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('onboarding_completed', true);
+
                       if (mounted) {
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(
