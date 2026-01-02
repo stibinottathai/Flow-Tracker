@@ -1,6 +1,6 @@
 {
-    "name": "p_tracker",
-    "short_name": "p_tracker",
+    "name": "Flow Tracker",
+    "short_name": "Flow Tracker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
