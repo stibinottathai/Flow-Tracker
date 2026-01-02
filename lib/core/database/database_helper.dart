@@ -18,22 +18,45 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDB,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future _createDB(Database db, int version) async {
     const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
     const textType = 'TEXT NOT NULL';
     const integerType = 'INTEGER NOT NULL';
+    const boolType = 'INTEGER NOT NULL DEFAULT 0';
 
     await db.execute('''
 CREATE TABLE user_settings ( 
   id $idType, 
   lastPeriodDate $textType,
   cycleLength $integerType,
-  periodDuration $integerType
+  periodDuration $integerType,
+  reminderEnabled $boolType,
+  reminderDaysBefore $integerType DEFAULT 1,
+  reminderTime $textType DEFAULT "09:00"
   )
 ''');
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN reminderEnabled INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN reminderDaysBefore INTEGER NOT NULL DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE user_settings ADD COLUMN reminderTime TEXT NOT NULL DEFAULT "09:00"',
+      );
+    }
   }
 
   Future<int> create(UserSettingsModel settings) async {

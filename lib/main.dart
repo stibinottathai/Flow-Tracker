@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:p_tracker/core/di/injection.dart';
 import 'package:p_tracker/core/theme/app_theme.dart';
+import 'package:p_tracker/core/theme/theme_provider.dart';
 import 'package:p_tracker/features/splash/presentation/pages/splash_page.dart';
+import 'package:p_tracker/core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,20 +12,25 @@ void main() async {
   // Configure dependencies
   await configureDependencies();
 
+  // Initialize Notification Service
+  await getIt<NotificationService>().init();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+
     return MaterialApp(
       title: 'P Tracker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       home: const SplashPage(),
     );
   }

@@ -9,12 +9,16 @@ import 'package:p_tracker/features/example/data/datasources/example_remote_datas
 import 'package:p_tracker/features/example/data/repositories/example_repository_impl.dart';
 import 'package:p_tracker/features/example/domain/repositories/example_repository.dart';
 import 'package:p_tracker/features/example/domain/usecases/get_examples.dart';
+import 'package:p_tracker/core/services/notification_service.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
   // External dependencies
   await _registerExternalDependencies();
+
+  // Services
+  getIt.registerLazySingleton<NotificationService>(() => NotificationService());
 
   // Data sources
   _registerDataSources();

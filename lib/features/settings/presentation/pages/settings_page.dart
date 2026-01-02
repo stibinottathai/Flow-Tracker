@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:p_tracker/core/database/database_helper.dart';
+import 'package:p_tracker/core/di/injection.dart';
+import 'package:p_tracker/core/services/notification_service.dart';
+import 'package:p_tracker/core/theme/theme_provider.dart';
 import 'package:p_tracker/features/home/presentation/utils/home_constants.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
+import 'package:p_tracker/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageState extends ConsumerState<SettingsPage> {
   UserSettingsModel? _settings;
   bool _isLoading = true;
 
@@ -20,6 +26,10 @@ class _SettingsPageState extends State<SettingsPage> {
   late DateTime _lastPeriodDate;
   late int _cycleLength;
   late int _periodDuration;
+
+  // Reminder state
+  bool _reminderEnabled = false;
+  int _reminderDaysBefore = 1;
 
   @override
   void initState() {
@@ -36,6 +46,8 @@ class _SettingsPageState extends State<SettingsPage> {
           _lastPeriodDate = DateTime.parse(settings.lastPeriodDate);
           _cycleLength = settings.cycleLength;
           _periodDuration = settings.periodDuration;
+          _reminderEnabled = settings.reminderEnabled;
+          _reminderDaysBefore = settings.reminderDaysBefore;
         } else {
           // Fallback defaults if DB is empty for some reason
           _lastPeriodDate = DateTime.now();
@@ -55,17 +67,37 @@ class _SettingsPageState extends State<SettingsPage> {
       lastPeriodDate: _lastPeriodDate.toIso8601String(),
       cycleLength: _cycleLength,
       periodDuration: _periodDuration,
+      reminderEnabled: _reminderEnabled,
+      reminderDaysBefore: _reminderDaysBefore,
+      reminderTime: "09:00", // Default time, ignored by new logic
     );
 
     await DatabaseHelper.instance.create(
       newSettings,
     ); // create uses insertOrReplace
 
+    await _scheduleReminder();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Settings saved successfully')),
       );
       Navigator.pop(context, true); // Return true to indicate changes
+    }
+  }
+
+  Future<void> _scheduleReminder() async {
+    final notificationService = getIt<NotificationService>();
+    await notificationService.cancelAllNotifications();
+
+    if (_reminderEnabled) {
+      await notificationService.requestPermissions();
+
+      await notificationService.schedulePeriodReminders(
+        lastPeriodDate: _lastPeriodDate,
+        cycleLength: _cycleLength,
+        daysBefore: _reminderDaysBefore,
+      );
     }
   }
 
@@ -97,13 +129,55 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _resetData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset Data"),
+        content: const Text(
+          "Are you sure you want to reset all data? This cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Reset"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Clear DB (assuming you have a method or just delete the file, but here we might just clear settings)
+      // Since we don't have a clear method exposed easily, we can just delete the settings entry if we knew the ID,
+      // or we can just clear shared prefs and let the user overwrite.
+      // Better: Clear SharedPrefs flag and navigate to Onboarding.
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('onboarding_completed');
+      // Also clear notifications
+      await getIt<NotificationService>().cancelAllNotifications();
+
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const OnboardingPage()),
+          (route) => false,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Check system brightness for now, as we don't have a provider yet
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Update local state to match system on first build if needed,
-    // but for the toggle UI we might want to track it separately or just show system state.
-    // For this implementation, I'll just use the system state for rendering.
+    final themeMode = ref.watch(themeProvider);
+    final isDark =
+        themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system &&
+            MediaQuery.of(context).platformBrightness == Brightness.dark);
 
     final bgColor = isDark
         ? HomeColors.backgroundDark
@@ -250,6 +324,153 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
 
+                  const SizedBox(height: 32),
+
+                  // Period Reminder Section
+                  _buildSectionHeader("PERIOD REMINDER", textMuted),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildListTile(
+                          title: "Enable Reminders",
+                          leadingIcon: Icons.notifications_outlined,
+                          leadingColor: const Color(0xFFEC4899),
+                          leadingBg: const Color(0xFFEC4899).withOpacity(0.1),
+                          trailing: Switch.adaptive(
+                            value: _reminderEnabled,
+                            onChanged: (value) {
+                              setState(() {
+                                _reminderEnabled = value;
+                              });
+                            },
+                            activeColor: HomeColors.primary,
+                          ),
+                          isFirst: true,
+                          isLast: !_reminderEnabled,
+                          borderColor: borderColor,
+                          textColor: textColor,
+                        ),
+                        if (_reminderEnabled) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            color: isDark
+                                ? Colors.black.withOpacity(0.2)
+                                : Colors.grey.withOpacity(0.05),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16,
+                                  color: textMuted,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "You will receive 3 random reminders throughout the day.",
+                                    style: GoogleFonts.nunitoSans(
+                                      fontSize: 12,
+                                      color: textMuted,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _buildListTile(
+                            title: "Days before period",
+                            trailing: _buildCounter(
+                              value: _reminderDaysBefore,
+                              onDecrement: () {
+                                if (_reminderDaysBefore > 1)
+                                  setState(() => _reminderDaysBefore--);
+                              },
+                              onIncrement: () {
+                                if (_reminderDaysBefore < 7)
+                                  setState(() => _reminderDaysBefore++);
+                              },
+                              isDark: isDark,
+                              textColor: textColor,
+                            ),
+                            isLast: true,
+                            borderColor: borderColor,
+                            textColor: textColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              bottom: 16,
+                            ),
+                            child: InkWell(
+                              onTap: () async {
+                                final notificationService =
+                                    getIt<NotificationService>();
+                                await notificationService.requestPermissions();
+                                await notificationService.showInstantNotification(
+                                  id: 999,
+                                  title: 'Test Notification',
+                                  body:
+                                      'This is a test notification from P Tracker.',
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: HomeColors.primary.withOpacity(0.5),
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: HomeColors.primary.withOpacity(0.05),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.notifications_active_outlined,
+                                      size: 18,
+                                      color: HomeColors.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Send Test Notification",
+                                      style: GoogleFonts.nunitoSans(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: HomeColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
 
                   // Save Button
@@ -313,14 +534,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: Switch.adaptive(
                         value: isDark,
                         onChanged: (value) {
-                          // In a real app, this would update a ThemeProvider
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Theme switching requires app restart or ThemeProvider',
-                              ),
-                            ),
-                          );
+                          ref.read(themeProvider.notifier).toggleTheme(value);
                         },
                         activeColor: HomeColors.primary,
                       ),
@@ -378,7 +592,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           isLast: true,
                           borderColor: borderColor,
                           textColor: textColor,
-                          onTap: () {},
+                          onTap: _resetData,
                         ),
                       ],
                     ),

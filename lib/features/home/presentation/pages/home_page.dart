@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:p_tracker/core/database/database_helper.dart';
+import 'package:p_tracker/core/di/injection.dart';
+import 'package:p_tracker/core/services/notification_service.dart';
 import 'package:p_tracker/features/home/presentation/utils/home_constants.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
 import 'package:p_tracker/features/settings/presentation/pages/settings_page.dart';
@@ -44,15 +46,36 @@ class _HomePageState extends State<HomePage> {
       lastPeriodDate: now.toIso8601String(),
       cycleLength: _settings!.cycleLength,
       periodDuration: _settings!.periodDuration,
+      reminderEnabled: _settings!.reminderEnabled,
+      reminderDaysBefore: _settings!.reminderDaysBefore,
+      reminderTime: _settings!.reminderTime,
     );
 
     await DatabaseHelper.instance.create(newSettings);
+    await _scheduleReminder(newSettings);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Period started! Cycle updated.')),
       );
       _loadSettings();
+    }
+  }
+
+  Future<void> _scheduleReminder(UserSettingsModel settings) async {
+    final notificationService = getIt<NotificationService>();
+    await notificationService.cancelAllNotifications();
+
+    if (settings.reminderEnabled) {
+      final lastPeriodDate = DateTime.parse(settings.lastPeriodDate);
+      final cycleLength = settings.cycleLength;
+      final reminderDaysBefore = settings.reminderDaysBefore;
+
+      await notificationService.schedulePeriodReminders(
+        lastPeriodDate: lastPeriodDate,
+        cycleLength: cycleLength,
+        daysBefore: reminderDaysBefore,
+      );
     }
   }
 
@@ -202,43 +225,47 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Next Period Card
-                  _buildStatusCard(
-                    icon: Icons.water_drop,
-                    iconColor: HomeColors.primary,
-                    iconBg: isDark
-                        ? HomeColors.primary.withOpacity(0.2)
-                        : HomeColors.primarySoft,
-                    title: "Next Period",
-                    value: DateFormat('d MMM y').format(nextPeriod),
-                    subtitle: "in $daysUntilPeriod days",
-                    subtitleColor: HomeColors.primary,
-                    surfaceColor: surfaceColor,
-                    textColor: textColor,
-                    textMuted: textMuted,
-                    isDark: isDark,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Fertile Window Card
-                  _buildStatusCard(
-                    icon: Icons.spa,
-                    iconColor: HomeColors.secondary,
-                    iconBg: isDark
-                        ? HomeColors.secondary.withOpacity(0.2)
-                        : HomeColors.secondarySoft,
-                    title: "Fertile Window",
-                    value:
-                        "${DateFormat('d MMM').format(fertileStart)} - ${DateFormat('d MMM').format(fertileEnd)}",
-                    subtitle:
-                        "Ovulation: ${DateFormat('d MMM').format(ovulationDate)}",
-                    subtitleColor: textMuted,
-                    surfaceColor: surfaceColor,
-                    textColor: textColor,
-                    textMuted: textMuted,
-                    isDark: isDark,
-                    isFertileCard: true,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusCard(
+                          icon: Icons.water_drop,
+                          iconColor: HomeColors.primary,
+                          iconBg: isDark
+                              ? HomeColors.primary.withOpacity(0.2)
+                              : HomeColors.primarySoft,
+                          title: "Next Period",
+                          value: DateFormat('d MMM').format(nextPeriod),
+                          subtitle: "$daysUntilPeriod days left",
+                          subtitleColor: HomeColors.primary,
+                          surfaceColor: surfaceColor,
+                          textColor: textColor,
+                          textMuted: textMuted,
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatusCard(
+                          icon: Icons.spa,
+                          iconColor: HomeColors.secondary,
+                          iconBg: isDark
+                              ? HomeColors.secondary.withOpacity(0.2)
+                              : HomeColors.secondarySoft,
+                          title: "Fertile Window",
+                          value:
+                              "${DateFormat('d MMM').format(fertileStart)} - ${DateFormat('d MMM').format(fertileEnd)}",
+                          subtitle:
+                              "Ovulation: ${DateFormat('d MMM').format(ovulationDate)}",
+                          subtitleColor: textMuted,
+                          surfaceColor: surfaceColor,
+                          textColor: textColor,
+                          textMuted: textMuted,
+                          isDark: isDark,
+                          isFertileCard: true,
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 24),
@@ -478,7 +505,7 @@ class _HomePageState extends State<HomePage> {
     bool isFertileCard = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(24),
@@ -493,7 +520,7 @@ class _HomePageState extends State<HomePage> {
           color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
         ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
@@ -502,49 +529,42 @@ class _HomePageState extends State<HomePage> {
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.nunitoSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: GoogleFonts.nunitoSans(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                isFertileCard
-                    ? Text(
-                        subtitle, // Use the passed subtitle which contains the ovulation date
-                        style: GoogleFonts.nunitoSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: textMuted,
-                        ),
-                      )
-                    : Text(
-                        subtitle,
-                        style: GoogleFonts.nunitoSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: subtitleColor,
-                        ),
-                      ),
-              ],
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: GoogleFonts.nunitoSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.nunitoSans(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: subtitleColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                subtitle,
+                style: GoogleFonts.nunitoSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: subtitleColor,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
