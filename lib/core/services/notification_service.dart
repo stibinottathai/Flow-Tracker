@@ -3,6 +3,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -14,18 +15,17 @@ class NotificationService {
 
   Future<void> init() async {
     tz.initializeTimeZones();
-    final String timeZoneName =
-        (await FlutterTimezone.getLocalTimezone()).identifier;
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/launcher_icon');
 
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
         );
 
     final InitializationSettings initializationSettings =
@@ -39,8 +39,37 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         // Handle notification tap
+        debugPrint('Notification tapped: ${response.payload}');
       },
+      onDidReceiveBackgroundNotificationResponse:
+          _notificationBackgroundHandler,
     );
+
+    // Create notification channel for Android
+    await _createNotificationChannel();
+  }
+
+  @pragma('vm:entry-point')
+  static void _notificationBackgroundHandler(NotificationResponse response) {
+    debugPrint('Background notification received: ${response.payload}');
+  }
+
+  Future<void> _createNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'period_tracker_channel',
+      'Period Tracker Notifications',
+      description: 'Notifications for period tracking reminders',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(channel);
   }
 
   Future<void> requestPermissions() async {
@@ -93,45 +122,72 @@ class NotificationService {
     required DateTime scheduledDate,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
+    final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(
+      scheduledDate,
+      tz.local,
+    );
+
+    debugPrint('Scheduling notification ID: $id at $scheduledTZ');
+
     try {
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
         body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        const NotificationDetails(
+        scheduledTZ,
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'period_tracker_channel',
             'Period Tracker Notifications',
             channelDescription: 'Notifications for period tracking',
             importance: Importance.max,
             priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            visibility: NotificationVisibility.public,
+            category: AndroidNotificationCategory.reminder,
+            fullScreenIntent: true,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: matchDateTimeComponents,
       );
+      debugPrint('Successfully scheduled notification ID: $id');
     } catch (e) {
+      debugPrint('Error scheduling exact notification: $e. Trying inexact...');
       // Fallback to inexact scheduling if exact alarms are not permitted
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
         body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        const NotificationDetails(
+        scheduledTZ,
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'period_tracker_channel',
             'Period Tracker Notifications',
             channelDescription: 'Notifications for period tracking',
             importance: Importance.max,
             priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            visibility: NotificationVisibility.public,
+            category: AndroidNotificationCategory.reminder,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: matchDateTimeComponents,
       );
+      debugPrint('Scheduled inexact notification ID: $id');
     }
   }
 
@@ -140,36 +196,50 @@ class NotificationService {
     required int cycleLength,
     required int daysBefore,
   }) async {
+    await requestPermissions();
     await cancelAllNotifications();
 
     // Calculate next period
     DateTime nextPeriod = lastPeriodDate.add(Duration(days: cycleLength));
-    while (nextPeriod.isBefore(DateTime.now())) {
+    final now = DateTime.now();
+
+    while (nextPeriod.isBefore(now) || nextPeriod.isAtSameMomentAs(now)) {
       nextPeriod = nextPeriod.add(Duration(days: cycleLength));
     }
 
     DateTime reminderDate = nextPeriod.subtract(Duration(days: daysBefore));
 
-    // If the calculated reminder date is in the past, move to the next cycle
-    if (reminderDate.isBefore(DateTime.now())) {
+    // If the calculated reminder date is in the past or today, move to the next cycle
+    final today = DateTime(now.year, now.month, now.day);
+    final reminderDay = DateTime(
+      reminderDate.year,
+      reminderDate.month,
+      reminderDate.day,
+    );
+
+    if (reminderDay.isBefore(today)) {
       nextPeriod = nextPeriod.add(Duration(days: cycleLength));
       reminderDate = nextPeriod.subtract(Duration(days: daysBefore));
     }
 
-    // Schedule 3 random notifications on that day
-    final random = Random();
-    // Define 3 windows: Morning (8-11), Afternoon (12-16), Evening (17-21)
+    debugPrint('Next period: $nextPeriod');
+    debugPrint('Reminder date: $reminderDate');
+
+    // Schedule 3 notifications on that day at fixed times for reliability
+    // Morning (9:00), Afternoon (14:00), Evening (19:00)
     final times = [
-      8 + random.nextInt(4), // 8, 9, 10, 11
-      12 + random.nextInt(5), // 12, 13, 14, 15, 16
-      17 + random.nextInt(5), // 17, 18, 19, 20, 21
+      {'hour': 9, 'minute': 0},
+      {'hour': 14, 'minute': 0},
+      {'hour': 19, 'minute': 0},
     ];
 
-    for (int i = 0; i < times.length; i++) {
-      final hour = times[i];
-      final minute = random.nextInt(60);
+    int scheduledCount = 0;
 
-      final scheduledTime = DateTime(
+    for (int i = 0; i < times.length; i++) {
+      final hour = times[i]['hour']!;
+      final minute = times[i]['minute']!;
+
+      DateTime scheduledTime = DateTime(
         reminderDate.year,
         reminderDate.month,
         reminderDate.day,
@@ -177,18 +247,33 @@ class NotificationService {
         minute,
       );
 
-      // Ensure we don't schedule in the past
-      if (scheduledTime.isBefore(DateTime.now())) {
+      // If today is the reminder day and the time has passed, skip
+      if (scheduledTime.isBefore(now)) {
+        debugPrint('Skipping notification at $scheduledTime (in past)');
         continue;
       }
 
       await scheduleNotification(
-        id: i,
-        title: 'Period Reminder',
-        body: 'Your period is expected in $daysBefore days.',
+        id: 100 + i, // Use higher IDs to avoid conflicts
+        title: 'Period Reminder 🩸',
+        body:
+            'Your period is expected in $daysBefore day${daysBefore > 1 ? 's' : ''}. Stay prepared!',
         scheduledDate: scheduledTime,
       );
+      scheduledCount++;
     }
+
+    debugPrint('Scheduled $scheduledCount reminder notifications');
+  }
+
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    final pending = await flutterLocalNotificationsPlugin
+        .pendingNotificationRequests();
+    debugPrint('Pending notifications: ${pending.length}');
+    for (var notification in pending) {
+      debugPrint('  - ID: ${notification.id}, Title: ${notification.title}');
+    }
+    return pending;
   }
 
   Future<void> cancelNotification(int id) async {
