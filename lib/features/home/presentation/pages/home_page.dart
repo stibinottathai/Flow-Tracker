@@ -7,6 +7,9 @@ import 'package:p_tracker/core/services/notification_service.dart';
 import 'package:p_tracker/features/home/presentation/utils/home_constants.dart';
 import 'package:p_tracker/features/onboarding/data/models/user_settings_model.dart';
 import 'package:p_tracker/features/settings/presentation/pages/settings_page.dart';
+import 'package:p_tracker/features/home/presentation/pages/widgets/status_card.dart';
+import 'package:p_tracker/features/home/presentation/pages/widgets/calendar_widget.dart';
+import 'package:p_tracker/features/home/presentation/pages/widgets/stat_item.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -287,7 +290,7 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildStatusCard(
+                          child: StatusCard(
                             icon: Icons.water_drop,
                             iconColor: HomeColors.primary,
                             iconBg: isDark
@@ -305,7 +308,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _buildStatusCard(
+                          child: StatusCard(
                             icon: Icons.spa,
                             iconColor: HomeColors.secondary,
                             iconBg: isDark
@@ -330,143 +333,31 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 16),
 
                     // Calendar
-                    Container(
-                      decoration: BoxDecoration(
-                        color: surfaceColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          // Calendar Header
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _focusedMonth = DateTime(
-                                        _focusedMonth.year,
-                                        _focusedMonth.month - 1,
-                                      );
-                                    });
-                                  },
-                                  icon: Icon(
-                                    Icons.chevron_left,
-                                    color: textMuted,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat('MMMM y').format(_focusedMonth),
-                                  style: GoogleFonts.nunitoSans(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _focusedMonth = DateTime(
-                                        _focusedMonth.year,
-                                        _focusedMonth.month + 1,
-                                      );
-                                    });
-                                  },
-                                  icon: Icon(
-                                    Icons.chevron_right,
-                                    color: textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Days Header
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: ["S", "M", "T", "W", "T", "F", "S"]
-                                  .map(
-                                    (day) => SizedBox(
-                                      width: 32,
-                                      child: Text(
-                                        day,
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.nunitoSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: textMuted,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // Calendar Grid
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: _buildCalendarGrid(
-                              isDark,
-                              textColor,
-                              lastPeriod,
-                              cycleLength,
-                              periodDuration,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Legend
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? surfaceColor.withOpacity(0.5)
-                                  : Colors.grey[50],
-                              border: Border(
-                                top: BorderSide(
-                                  color: isDark
-                                      ? Colors.grey[800]!
-                                      : Colors.grey[100]!,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildLegendItem("Period", HomeColors.primary),
-                                const SizedBox(width: 16),
-                                _buildLegendItem(
-                                  "Fertile",
-                                  HomeColors.secondary,
-                                ),
-                                const SizedBox(width: 16),
-                                _buildLegendItem(
-                                  "Ovulation",
-                                  HomeColors.accent,
-                                  icon: Icons.star,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    CalendarWidget(
+                      focusedMonth: _focusedMonth,
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textColor: textColor,
+                      textMuted: textMuted,
+                      lastPeriod: lastPeriod,
+                      cycleLength: cycleLength,
+                      periodDuration: periodDuration,
+                      onPreviousMonth: () {
+                        setState(() {
+                          _focusedMonth = DateTime(
+                            _focusedMonth.year,
+                            _focusedMonth.month - 1,
+                          );
+                        });
+                      },
+                      onNextMonth: () {
+                        setState(() {
+                          _focusedMonth = DateTime(
+                            _focusedMonth.year,
+                            _focusedMonth.month + 1,
+                          );
+                        });
+                      },
                     ),
 
                     const SizedBox(height: 12),
@@ -491,22 +382,22 @@ class _HomePageState extends State<HomePage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem(
-                            "Cycle length:",
-                            "$cycleLength days",
-                            textMuted,
-                            textColor,
+                          StatItem(
+                            label: "Cycle length:",
+                            value: "$cycleLength days",
+                            labelColor: textMuted,
+                            valueColor: textColor,
                           ),
                           Container(
                             width: 1,
                             height: 16,
                             color: isDark ? Colors.grey[700] : Colors.grey[200],
                           ),
-                          _buildStatItem(
-                            "Period:",
-                            "$periodDuration days",
-                            textMuted,
-                            textColor,
+                          StatItem(
+                            label: "Period:",
+                            value: "$periodDuration days",
+                            labelColor: textMuted,
+                            valueColor: textColor,
                           ),
                         ],
                       ),
@@ -550,285 +441,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String title,
-    required String value,
-    required String subtitle,
-    required Color subtitleColor,
-    required Color surfaceColor,
-    required Color textColor,
-    required Color textMuted,
-    required bool isDark,
-    bool isFertileCard = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: GoogleFonts.nunitoSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textMuted,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: GoogleFonts.nunitoSans(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: subtitleColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                subtitle,
-                style: GoogleFonts.nunitoSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: subtitleColor,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCalendarGrid(
-    bool isDark,
-    Color textColor,
-    DateTime lastPeriod,
-    int cycleLength,
-    int periodDuration,
-  ) {
-    final daysInMonth = DateTime(
-      _focusedMonth.year,
-      _focusedMonth.month + 1,
-      0,
-    ).day;
-    final firstDayWeekday = DateTime(
-      _focusedMonth.year,
-      _focusedMonth.month,
-      1,
-    ).weekday;
-    // Sunday is 7, so if it's Sunday, offset is 0. If Monday (1), offset is 1.
-    final emptyStart = firstDayWeekday % 7;
-
-    final days = List.generate(daysInMonth, (index) => index + 1);
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 4,
-        childAspectRatio: 1,
-      ),
-      itemCount: emptyStart + days.length,
-      itemBuilder: (context, index) {
-        if (index < emptyStart) return const SizedBox();
-
-        final day = days[index - emptyStart];
-        final currentDate = DateTime(
-          _focusedMonth.year,
-          _focusedMonth.month,
-          day,
-        );
-
-        // Calculate cycle day
-        final diff = currentDate.difference(lastPeriod).inDays;
-        final cycleDay = (diff % cycleLength + cycleLength) % cycleLength;
-
-        // Determine status
-        bool isPeriod = cycleDay < periodDuration;
-        bool isOvulation = cycleDay == (cycleLength - 14);
-        // Fertile window: 5 days before ovulation + ovulation day + 1 day after
-        // Ovulation is at (cycleLength - 14)
-        // Start: (cycleLength - 14) - 5 = cycleLength - 19
-        // End: (cycleLength - 14) + 1 = cycleLength - 13
-        bool isFertile =
-            cycleDay >= (cycleLength - 19) && cycleDay <= (cycleLength - 13);
-
-        // Rounded corners logic
-        BorderRadius? borderRadius;
-        if (isPeriod) {
-          borderRadius = BorderRadius.circular(20);
-        }
-        if (isFertile) {
-          // Check previous and next day for connectivity
-          // This is a bit complex to do perfectly inside builder without pre-calculating all statuses.
-          // For simplicity, let's just use rounded corners for start/end of the range within the month.
-
-          bool isStart = cycleDay == (cycleLength - 19);
-          bool isEnd = cycleDay == (cycleLength - 13);
-
-          if (isStart) {
-            borderRadius = const BorderRadius.horizontal(
-              left: Radius.circular(20),
-            );
-          } else if (isEnd) {
-            borderRadius = const BorderRadius.horizontal(
-              right: Radius.circular(20),
-            );
-          } else {
-            borderRadius = BorderRadius.zero;
-          }
-
-          // Also handle edge of week (Sunday/Saturday)
-          if (index % 7 == 0) {
-            // Sunday (start of row)
-            borderRadius = BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-              topRight: isEnd ? Radius.circular(20) : Radius.zero,
-              bottomRight: isEnd ? Radius.circular(20) : Radius.zero,
-            );
-          } else if (index % 7 == 6) {
-            // Saturday (end of row)
-            borderRadius = BorderRadius.only(
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-              topLeft: isStart ? Radius.circular(20) : Radius.zero,
-              bottomLeft: isStart ? Radius.circular(20) : Radius.zero,
-            );
-          }
-        }
-
-        Color? bgColor;
-        Color? fgColor;
-
-        if (isPeriod) {
-          bgColor = isDark
-              ? HomeColors.primary.withOpacity(0.2)
-              : HomeColors.primarySoft;
-          fgColor = isDark ? const Color(0xFFFDA4AF) : HomeColors.primary;
-        } else if (isFertile) {
-          bgColor = isDark
-              ? HomeColors.secondary.withOpacity(0.2)
-              : HomeColors.secondarySoft;
-          fgColor = isDark ? const Color(0xFF86EFAC) : HomeColors.secondary;
-        } else {
-          fgColor = textColor;
-        }
-
-        return Container(
-          decoration: BoxDecoration(color: bgColor, borderRadius: borderRadius),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Text(
-                "$day",
-                style: GoogleFonts.nunitoSans(
-                  fontWeight: (isPeriod || isFertile)
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: fgColor,
-                ),
-              ),
-              if (isOvulation)
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: Icon(
-                    Icons.star_rounded,
-                    size: 12,
-                    color: isDark ? Colors.yellow[400] : HomeColors.accent,
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLegendItem(String label, Color color, {IconData? icon}) {
-    return Row(
-      children: [
-        if (icon != null)
-          Icon(icon, size: 16, color: color)
-        else
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: GoogleFonts.nunitoSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: HomeColors
-                .textMutedLight, // Using light muted for legend usually
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value,
-    Color labelColor,
-    Color valueColor,
-  ) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.nunitoSans(fontSize: 14, color: labelColor),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.nunitoSans(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
-        ),
-      ],
     );
   }
 }
